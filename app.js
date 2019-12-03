@@ -5,11 +5,8 @@ let items = require('./to-do-items');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
 const fs = require('fs');
-const helmet = require("helmet");
 const schema = require('./schemas');
 const middleware = require('./middleware');
-
-app.use(helmet());
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
@@ -27,9 +24,8 @@ app.use('', (req, res, next) => {
 let itemsArray = [];
 itemsArray = items;
 
-app.get('/to-do-items', (req, res, next) => {
+app.get('/to-do-items', (req, res) => {
   res.status(200).json(items);
-  // if(error) return next(res.status)
 });
 
 app.post('/to-do-items', middleware(schema), (req, res, next) => {
@@ -42,12 +38,15 @@ app.post('/to-do-items', middleware(schema), (req, res, next) => {
 
 app.delete('/to-do-items/:id', (req, res, next) => {
   const id = req.params.id;
+  let findArray = _.filter(itemsArray, function (val) {
+    return val.id === id;
+  });
+  if(findArray.length === 0) return next({status: 400, error: 'Bad request'});
   _.remove(itemsArray, function (val) {
     return val.id === id
   });
   saveRegistrationData();
   res.status(204).send();
-
 });
 
 app.patch('/to-do-items/:id', (req, res, next) => {
@@ -56,19 +55,22 @@ app.patch('/to-do-items/:id', (req, res, next) => {
   let findArray = _.filter(itemsArray, function (val) {
     return val.id === id;
   });
-  if(findArray[0] === undefined) return res.status(404).json('404, unknown page');
-
+  if(findArray.length === 0) return next({status: 400, error: 'Bad request'});
   findArray[0].done = req.body.done;
   saveRegistrationData();
   res.status(200).json(findArray[0]);
 });
 
 function saveRegistrationData() {
-  fs.writeFile('to-do-items.json', JSON.stringify(itemsArray), (err) => {
+  fs.writeFile('./to-do-items.json', JSON.stringify(itemsArray), (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
   })
 }
+
+app.use('*', (req, res) => {
+  res.status(404).json('404, Not Found')
+});
 
 // error handler
 app.use((err, req, res, next) => {
