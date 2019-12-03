@@ -11,6 +11,7 @@ const middleware = require('./middleware');
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
+// middleware
 app.use('', (req, res, next) => {
   if (req.headers.authorization === '12345') {
     console.log('Auth Success');
@@ -24,10 +25,12 @@ app.use('', (req, res, next) => {
 let itemsArray = [];
 itemsArray = items;
 
+///getTodos​
 app.get('/to-do-items', (req, res) => {
   res.status(200).json(items);
 });
 
+///addTodo
 app.post('/to-do-items', middleware(schema), (req, res, next) => {
   if (req.body.length === 0) return next('body is empty');
   req.body.id = `f${(~~(Math.random() * 1e8)).toString(16)}`;
@@ -36,6 +39,7 @@ app.post('/to-do-items', middleware(schema), (req, res, next) => {
   res.status(200).json(req.body);
 });
 
+///removeTodo
 app.delete('/to-do-items/:id', (req, res, next) => {
   const id = req.params.id;
   let findArray = _.filter(itemsArray, function (val) {
@@ -49,6 +53,7 @@ app.delete('/to-do-items/:id', (req, res, next) => {
   res.status(204).send();
 });
 
+////markDone & markUndone
 app.patch('/to-do-items/:id', (req, res, next) => {
   const id = req.params.id;
 
